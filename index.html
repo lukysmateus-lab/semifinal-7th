@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spelling Bee Semifinal - 7º Ano (Unidades)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; }
+            .shadow-xl, .shadow-md, .shadow-lg, .shadow-2xl { box-shadow: none !important; }
+            .bracket-container { overflow-x: visible !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+    <!-- HEADER -->
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
+            
+            <div class="flex items-center space-x-3">
+                <div class="p-3 bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 rounded-xl shadow-lg shadow-amber-500/20 font-black text-xl">
+                    <i class="fa-solid fa-spell-check"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
+                            Spelling Bee & Torneio
+                        </h1>
+                        <span class="text-xs font-bold px-2.5 py-0.5 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-full">
+                            Semifinal • 7th Grade
+                        </span>
+                    </div>
+                    
+                    <!-- SELETOR DE TURNO E UNIDADE -->
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-xs text-slate-400 font-semibold">Unidade/Turno:</span>
+                        <select id="class-select" onchange="onClassChange()" class="bg-slate-950 border border-amber-500/60 text-amber-300 text-xs font-bold rounded-md px-2 py-1 focus:ring-1 focus:ring-amber-400 focus:outline-none cursor-pointer">
+                            <option value="ASA_NORTE_MATUTINO">Asa Norte - Matutino (10 Alunos)</option>
+                            <option value="ASA_NORTE_VESPERTINO">Asa Norte - Vespertino (8 Alunos)</option>
+                            <option value="ASA_SUL_MATUTINO">Asa Sul - Matutino (9 Alunos)</option>
+                        </select>
+                        <span id="save-indicator" class="text-[10px] text-slate-500 italic ml-2"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTÕES DE AÇÃO RÁPIDA -->
+            <div class="flex flex-wrap items-center gap-2 no-print">
+                <button onclick="saveCurrentTournament()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 shadow-md hover:shadow-emerald-500/20 active:scale-95" title="Salva o chaveamento para continuar em outra aula">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    <span>Salvar Progresso</span>
+                </button>
+                
+                <button onclick="reshuffleInitialRound()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 shadow-md hover:shadow-indigo-500/20 active:scale-95">
+                    <i class="fa-solid fa-shuffle"></i>
+                    <span>Reiniciar 1ª Fase</span>
+                </button>
+
+                <button onclick="window.print()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 border border-slate-700">
+                    <i class="fa-solid fa-print"></i>
+                    <span>Imprimir</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5">
+        
+        <!-- BANNER INFORMATIVO -->
+        <div id="info-banner" class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-300 shadow-sm no-print">
+            <div class="flex items-center gap-2.5">
+                <i class="fa-solid fa-circle-info text-amber-400 text-base shrink-0"></i>
+                <div id="info-banner-text">Avalie cada aluno: se acertar, clique para marcar verde. Ambos podem avançar, apenas um, ou nenhum.</div>
+            </div>
+            <div id="progress-indicator" class="text-xs font-semibold text-slate-400 shrink-0">
+                Alunos Classificados p/ Próxima Fase: <span id="qualified-count" class="text-emerald-400 font-bold">0</span>
+            </div>
+        </div>
+
+        <!-- TABS DE NAVEGAÇÃO -->
+        <div class="border-b border-slate-800 no-print flex justify-between items-center flex-wrap gap-3">
+            <nav class="flex space-x-2 sm:space-x-6">
+                <button id="tab-spelling-btn" onclick="switchTab('spelling')" class="pb-3 px-1 border-b-2 border-amber-500 text-amber-400 font-bold text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Sorteador Spelling Bee
+                </button>
+                <button id="tab-bracket-btn" onclick="switchTab('bracket')" class="pb-3 px-1 border-b-2 border-transparent text-slate-400 hover:text-slate-200 font-medium text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-sitemap"></i> Chaveamento Adaptativo (<span id="bracket-class-label">Asa Norte - Matutino</span>)
+                </button>
+                <button id="tab-players-btn" onclick="switchTab('players')" class="pb-3 px-1 border-b-2 border-transparent text-slate-400 hover:text-slate-200 font-medium text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-user-group"></i> Alunos (<span id="tab-players-count">0</span>)
+                </button>
+            </nav>
+        </div>
+
+        <!-- CONTEÚDO TAB: SORTEADOR -->
+        <div id="tab-spelling" class="space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl relative overflow-hidden">
+                        
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+                            <div>
+                                <label for="phase-select" class="block text-xs font-bold text-amber-400 uppercase tracking-wider mb-1">
+                                    <i class="fa-solid fa-layer-group mr-1"></i> Nível / Rodada:
+                                </label>
+                                <select id="phase-select" onchange="onPhaseChange()" class="bg-slate-950 border border-slate-700 text-slate-100 text-sm rounded-lg font-semibold px-4 py-2.5 focus:ring-2 focus:ring-amber-500 focus:outline-none w-full sm:w-auto">
+                                    <option value="round1">Round 1 - Easy Words</option>
+                                    <option value="round2">Round 2 - Medium Words</option>
+                                    <option value="round3">Round 3 - Hard Words</option>
+                                    <option value="round4">Extra Round - Compounds & Expressions</option>
+                                    <option value="round5">Sentences - Desempate</option>
+                                    <option value="all">Todas as Fases Misturadas</option>
+                                </select>
+                            </div>
+                            <div class="text-right flex items-center gap-3">
+                                <div>
+                                    <span class="text-xs text-slate-400 block">Restantes no Nível:</span>
+                                    <span id="remaining-count" class="text-lg font-black text-amber-400">0</span>
+                                </div>
+                                <button onclick="resetPhaseWords()" title="Resetar palavras usadas nesta fase" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 text-xs transition-colors">
+                                    <i class="fa-solid fa-rotate-right"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="word-card" class="bg-slate-950 border border-slate-800 rounded-xl p-8 text-center space-y-4 min-h-[220px] flex flex-col justify-center items-center relative group">
+                            <span id="word-badge" class="px-3 py-1 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-full text-xs font-bold uppercase tracking-wider">
+                                Pronto para Sortear
+                            </span>
+                            
+                            <h2 id="drawn-word-display" class="text-2xl sm:text-4xl font-black text-white tracking-wide transition-all duration-300 select-all my-2">
+                                ???
+                            </h2>
+
+                            <div id="word-actions-bar" class="hidden flex-wrap justify-center items-center gap-2 pt-2">
+                                <button id="reveal-btn" onclick="toggleRevealWord()" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg text-xs font-black flex items-center gap-2 transition-transform active:scale-95 shadow-md">
+                                    <i id="reveal-btn-icon" class="fa-solid fa-eye"></i>
+                                    <span id="reveal-btn-text">Revelar Palavra</span>
+                                </button>
+
+                                <button id="speak-btn" onclick="speakCurrentWord()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-lg border border-slate-700 text-xs font-semibold flex items-center gap-2 transition-transform active:scale-95 shadow-md">
+                                    <i class="fa-solid fa-volume-high text-sm"></i> Ouvir Pronúncia
+                                </button>
+
+                                <button id="btn-sentence" onclick="showHelpInfo('sentence')" class="px-3.5 py-2 bg-indigo-950/80 hover:bg-indigo-900/90 text-indigo-300 rounded-lg border border-indigo-700/60 text-xs font-semibold flex items-center gap-2 transition-all active:scale-95 shadow-md">
+                                    <i class="fa-solid fa-quote-left text-sm text-indigo-400"></i> Frase / Contexto
+                                </button>
+
+                                <button id="btn-synonym" onclick="showHelpInfo('synonym')" class="px-3.5 py-2 bg-purple-950/80 hover:bg-purple-900/90 text-purple-300 rounded-lg border border-purple-700/60 text-xs font-semibold flex items-center gap-2 transition-all active:scale-95 shadow-md">
+                                    <i class="fa-solid fa-lightbulb text-sm text-purple-400"></i> Sinônimo / Dica
+                                </button>
+
+                                <button id="btn-translation" onclick="showHelpInfo('translation')" class="px-3.5 py-2 bg-emerald-950/80 hover:bg-emerald-900/90 text-emerald-300 rounded-lg border border-emerald-700/60 text-xs font-semibold flex items-center gap-2 transition-all active:scale-95 shadow-md">
+                                    <i class="fa-solid fa-language text-sm text-emerald-400"></i> Tradução (PT)
+                                </button>
+                            </div>
+
+                            <div id="helper-result-box" class="hidden w-full max-w-lg mt-4 p-4 bg-slate-900/90 border border-slate-700/80 rounded-xl text-left shadow-lg relative">
+                                <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
+                                    <span id="helper-type-badge" class="text-[11px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5"></span>
+                                    <button onclick="hideHelperBox()" class="text-slate-500 hover:text-slate-300 text-xs p-1">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                                <div id="helper-content" class="text-sm font-medium text-slate-200"></div>
+                            </div>
+
+                            <div id="judge-eval-box" class="hidden w-full max-w-lg mt-4 p-4 bg-slate-900 border border-slate-700/80 rounded-xl space-y-3 shadow-lg text-left">
+                                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                                    <span class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                                        <i class="fa-solid fa-gavel"></i> Painel do Juiz - Avaliação
+                                    </span>
+                                    <span class="text-[10px] text-slate-400">Digite a soletração</span>
+                                </div>
+                                
+                                <div class="flex gap-2">
+                                    <input type="text" id="judge-spelling-input" onkeyup="if(event.key==='Enter') evaluateSpelling()" placeholder="Ex: W-A-T-E-R" 
+                                           class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white font-mono uppercase focus:outline-none focus:border-amber-500 transition-colors">
+                                    <button onclick="evaluateSpelling()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-lg transition-all flex items-center gap-1.5 shrink-0 shadow-md">
+                                        <i class="fa-solid fa-check-double"></i> Avaliar
+                                    </button>
+                                </div>
+                                <div id="judge-feedback" class="hidden p-3 rounded-lg text-xs font-semibold mt-2 border"></div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <button onclick="drawRandomWord()" class="flex-1 py-4 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-400 hover:to-amber-600 text-slate-950 font-black text-lg rounded-xl shadow-lg shadow-amber-500/20 transition-all transform active:scale-[0.98] flex items-center justify-center gap-3 uppercase tracking-wider">
+                                <i class="fa-solid fa-dice text-2xl"></i>
+                                <span>Sortear Palavra</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HISTÓRICO LATERAL -->
+                <div class="space-y-6">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                        <div onclick="toggleHistoryList()" class="flex items-center justify-between border-b border-slate-800 pb-3 cursor-pointer select-none group">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs group-hover:bg-indigo-500/20 transition-all">
+                                    <i id="history-arrow" class="fa-solid fa-chevron-down text-xs transition-transform duration-300"></i>
+                                </div>
+                                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-history text-indigo-400"></i> Histórico da Aula
+                                </h3>
+                                <span id="history-badge-count" class="text-[10px] font-bold px-2 py-0.5 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-full">0</span>
+                            </div>
+                            <button onclick="event.stopPropagation(); clearHistory()" class="text-[11px] text-slate-400 hover:text-rose-400 transition-colors">Limpar</button>
+                        </div>
+                        <div id="draw-history" class="space-y-2 max-h-[360px] overflow-y-auto custom-scrollbar pr-1">
+                            <p class="text-xs text-slate-500 text-center py-4">Nenhuma palavra sorteada nesta sessão.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTEÚDO TAB: BRACKET ADAPTATIVO -->
+        <div id="tab-bracket" class="hidden space-y-4">
+            
+            <!-- Barra de Ações da Fase -->
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm no-print">
+                <div class="text-xs text-slate-300 space-y-1">
+                    <div class="font-bold text-amber-400 flex items-center gap-1.5">
+                        <i class="fa-solid fa-toggle-on"></i> Como funciona a avaliação dos alunos:
+                    </div>
+                    <div>
+                        Clique no botão ao lado do nome do aluno:
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-emerald-950 border border-emerald-500 text-emerald-300 font-bold ml-1"><i class="fa-solid fa-check mr-1"></i> Passou</span>
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-rose-950 border border-rose-500 text-rose-300 font-bold ml-1"><i class="fa-solid fa-xmark mr-1"></i> Errou</span>
+                        <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-400 ml-1">Pendente (?)</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="advanceToNextRound()" class="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black rounded-lg transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/20 active:scale-95">
+                        <i class="fa-solid fa-forward-step"></i>
+                        <span>Gerar Próxima Fase (<span id="next-round-btn-count">0</span> Alunos)</span>
+                    </button>
+                    <button onclick="removeLastRound()" id="btn-remove-round" class="hidden px-3 py-2.5 bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 text-xs font-semibold rounded-lg transition-colors" title="Desfazer última fase criada">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bracket-container overflow-x-auto custom-scrollbar pb-8 pt-2">
+                <div id="bracket-columns-container" class="flex gap-6 items-start min-w-max"></div>
+            </div>
+        </div>
+
+        <!-- CONTEÚDO TAB: ALUNOS -->
+        <div id="tab-players" class="hidden space-y-6">
+            <div class="bg-slate-900 rounded-xl p-6 border border-slate-800 space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-user-group text-indigo-400"></i> Lista de Alunos - <span id="players-class-title" class="text-amber-400">Asa Norte - Matutino</span>
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">Alunos da turma selecionada. Adicione ou remova conforme a presença do dia.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span id="players-badge-count" class="text-xs text-slate-300 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 font-semibold">Total: 0 Alunos</span>
+                        <button onclick="restoreCurrentClassDefault()" class="text-xs px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-lg border border-slate-700 transition-colors flex items-center gap-1.5">
+                            <i class="fa-solid fa-rotate"></i> Restaurar Alunos da Turma
+                        </button>
+                    </div>
+                </div>
+
+                <form onsubmit="handleAddPlayer(event)" class="flex gap-2">
+                    <div class="relative flex-1">
+                        <input type="text" id="new-player-name" placeholder="Adicionar aluno ausente ou transferido..." 
+                               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                               maxlength="35" required />
+                    </div>
+                    <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-all flex items-center gap-2 shadow-md shrink-0">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Adicionar</span>
+                    </button>
+                </form>
+
+                <div id="players-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-slate-900 border-t border-slate-800 py-4 text-center text-xs text-slate-500 mt-auto no-print">
+        Spelling Bee 7th Grade Semifinal • SmartGen CLIL & Language • Leonardo da Vinci
+    </footer>
+
+    <script>
+        // --- BASE DE DADOS DOS ALUNOS POR UNIDADE/TURNO (SEMIFINAL - 7º ANO) ---
+        const CLASS_STUDENTS = {
+            "ASA_NORTE_MATUTINO": [
+                "LUCAS MATOS FERRI DE FARIA",
+                "MIA SAYURI SAITO BRAGA",
+                "FERNANDA GUIMARÃES DAMASCENO",
+                "GUSTAVO CHAVES DOURADO BATISTA",
+                "ANTÔNIO SCOLARI LEITÃO",
+                "GUSTAVO POVOA GOMES SALES",
+                "CAROLINA DE OLIVEIRA WELLER",
+                "LUIZA EURICO ALVES",
+                "BRIGITTE LOPES RABELO",
+                "GABRIELA PORTO PEIXOTO GARBIM"
+            ],
+            "ASA_NORTE_VESPERTINO": [
+                "BÁRBARA RICI BORGES",
+                "DANIEL SENA DOMINGUES",
+                "EDUARDO PRADO MAGALHÃES LOPES",
+                "LUCAS MESSEDER PADRÃO",
+                "MARIANO CERQUEIRA LIMA BARBOSA",
+                "MIGUEL PALADINO AMORIM",
+                "LUCAS CUNHA MARQUES",
+                "TEO VIEIRA DE ALCANTARA"
+            ],
+            "ASA_SUL_MATUTINO": [
+                "GABRIELA OLIVEIRA SARTORI",
+                "GABRIEL MASCARENHAS MENDES",
+                "RODRIGO GORINI PAIVA",
+                "RICARDO NEVES AYRES ANGOLA",
+                "ARTHUR ARAÚJO SOUZA",
+                "JOÃO PEDRO OLIVEIRA SARTORI",
+                "LUIZA CAGNI POSTIGO",
+                "MAURÍCIO VASCONCELLOS VARGAS",
+                "RAQUEL SCHWENGBER GONÇALVES"
+            ]
+        };
+
+        // --- LISTA OFICIAL DE PALAVRAS DO 7º ANO (SEMIFINAL PDF) ---
+        const SPELLING_WORDS = {
+            round1: [
+                "ABSOLUTE", "ADOPT", "AGILITY", "AMOUNTS", "ANYMORE", "ANYONE", "ANCHOVY", "ARMED", "ASKED", "ATTACK", 
+                "AVOID", "BADMINTON", "BAGGY", "BATHTUB", "BENEFITS", "BOILING", "BOOST", "BUBBLES", "BUSTED", "CAREER", 
+                "CARTOONS", "CELEBRITIES", "CHARMING", "CHICKEN", "CHILDHOOD", "CHOCOLATE", "COUNTABLE", "CREATIVITY", "CYCLING", "DECADES", 
+                "DECORATE", "DECORATION", "DEVELOP", "DIMPLES", "DIVINE", "EASILY", "EGGPLANT", "EPISODES", "FIFTIES", "FLANNEL", 
+                "FORGIVE", "FRIENDSHIP", "FRISBEE", "GERMANY", "GIFTED", "GRADUATION", "GROSS", "HAIRCUT", "HAZELNUT", "HEALTHY", 
+                "HELICOPTER", "HOLIDAYS", "HOMEWORK", "IMAGES", "INTERESTED", "KITTENS", "LAME", "LATELY", "LIFESTYLE", "LOUDLY", 
+                "MANAGER", "MATCH", "MEMORABLE", "MEMORY", "MINORITY", "NONSTOP", "OLYMPICS", "OUTSIDE", "OWNERS", "PARTICIPANT", 
+                "PLASTER", "POETRY", "POLITE", "RAISINS", "PROFILE", "READING", "PROMOTE", "REDHEAD", "RELIABLE", "ROLEPLAY", 
+                "RUNNING", "SATURDAY", "SCREAM", "SELFIES", "SENSES", "SITUATION", "SKILLS", "SPOIL", "STARVING", "STRIPED", 
+                "STUFF", "SUPERPOWERS", "SURVEY", "SWIMMING", "TALENTED", "TASTE", "TASTY", "TEAMWORK", "TEENAGER", "TIRING", 
+                "TOLD", "TOGETHER", "TOTALLY", "TRAFFIC", "ULTIMATE", "UNLESS", "UNIQUE", "USELESS", "VEGETABLES", "VILLAGE", 
+                "VOLLEYBALL", "WASABI", "WHENEVER", "WHATEVER", "WILLPOWER", "YOUNG", "YUMMY"
+            ],
+            round2: [
+                "ACHIEVE", "ADVENTUROUS", "ALTERNATIVELY", "ATHLETE", "BEDOUIN", "CAMBODIA", "CANCELED (US) / CANCELLED (UK)", "CHALLENGING", "COMPETITION", "COMPETITIVE", 
+                "CONTESTANTS", "CROWDED", "DANGEROUS", "DELICACIES", "DISAPPOINTED", "DISGUSTING", "DOCUMENTARY", "DREAMED (US) / DREAMT (UK)", "ENCOURAGED", "ENHANCE", 
+                "ENJOYABLE", "ENOUGH", "ENTERTAINMENT", "EXCEPT", "EXCITING", "EXPENSIVE", "EXPERIENCE", "EXPRESSES", "EXPRESSIONS", "FASCINATING", 
+                "FORTUNATELY", "FREEZING", "GENERATION", "GORGEOUS", "HANDLE", "HIDEOUS", "INSTEAD", "INTERNATIONAL", "INTRUDER", "INVITATION", 
+                "KAYAKING", "ΜΟΝΟΤΟΝOUS", "NETWORKING", "NORTHERN", "NOWADAYS", "OKLAHOMA", "OVERCOME", "PATTERN", "PERFECTLY", "PHASE", 
+                "PRACTICED (US) / PRACTISED (UK)", "PRACTICING (US) / PRACTISING (UK)", "PREPOSITION", "PREVENTS", "RATHER", "RECENTLY", "REMEMBERED", "REMINDED", "REQUIRE", "RESTAURANTS", 
+                "REWARDING", "RIDICULOUS", "SKETCHBOOK", "SPECIALIST", "STEW", "STUNNING", "SUCCESSFUL", "SURGEON", "SURVEYED", "TRAGEDIES", 
+                "UNCOUNTABLE", "UNHEALTHY", "VINEGAR", "WHOLEMEAL", "WONDERLAND", "WRINKLES"
+            ],
+            round3: [
+                "AGGRESSIVE", "APPARENTLY", "ARROGANT", "ARRANGEMENTS", "ATTENTION", "COMPLETELY", "EMPHASIZES (US) / EMPHASISES (UK)", "ENGAGING", "ESTABLISH", "EXCEPTION", 
+                "EXHAUSTED", "FOOTBALLERS", "FORTYISH", "FRECKLES", "HIGHLIGHTED", "INTERPRETATION", "INTERNATIONAL", "LINKEDIN", "LONGBOARDING", "METHODOLOGY", 
+                "NETWORKING", "NEITHER", "OVERWEIGHT", "PALESTINIAN", "PHOTOGRAPH", "PHYSICALLY", "PLEASURABLE", "PRACTITIONERS", "PRESSURE", "PROFESSIONAL", 
+                "PROGRAMMES (UK) / PROGRAMS (US)", "PSYCHIATRIST", "QUANTIFIERS", "RECKON", "RELATIONSHIP", "RELATIONSHIPS", "SARCASTIC", "SCHEDULE", "SPELLBINDING", "SUDDENLY", 
+                "SWEETENER", "TECHNOLOGICAL", "TREADMILL", "TRUSTWORTHY"
+            ],
+            round4: [
+                "A COUPLE OF TIMES", "AVERAGE HEIGHT", "BE UPSET", "BEST-SELLING", "BLOOD PRESSURE", "BORED TO DEATH", "BODY FAT", "CHAT ONLINE", "CHAT UP", "CHEAT ON", 
+                "COOKERY SHOW", "DEVELOP TEAMWORK", "FREAK OUT", "GUEST LIST", "GO OUT WITH", "INDOOR SPORTS", "CHEER UP", "COUCH PΟΤΑΤΟ", "EAT IN", "FRIED CRICKETS", 
+                "GIVE A BREAK", "HAVE A BLAST", "JUNK FOOD", "CHOCOLATE SAUCE", "CRASH A PARTY", "FREE UP", "GOOD-LOOKING", "GIVE IN TO", "HAVE A ROW", "MOUTH-WATERING", 
+                "MUSCLE STRENGTH", "NIBBLE-ON (NIBBLE ON)", "OUTDOOR SPORTS", "PARTY ANIMAL", "PARTY POOPER", "PHYSICAL ACTIVITIES", "PRIME TIME / PRIMETIME", "REDUCE STRESS", "RUN OUT OF", "SELF-CONTROL", 
+                "SHORT-TEMPERED", "SHOULDER LENGTH", "SOAP OPERA", "SPARKLING WATER", "SPLIT UP", "STAINED GLASS", "STAND UP PADDLING", "STILL WATER", "STRATEGIC THINKING", "SUMMER CAMP", 
+                "SWEET SIXTEEN PARTY", "TAKE AWAY", "TAKE MY MIND OFF", "THOUGHT-PROVOKING", "TV SERIES", "URBAN AREAS", "VEGETABLE STEW", "WASABI ICE CREAM", "WEB DESIGNER", "WELL-KNOWN", 
+                "WELL-MANNERED", "WINGSUIT FLYING", "BLACK LEATHER", "GORGEOUS FLARED TROUSERS", "STRATFORD-UPON-AVON", "BLEND IN WITH THE LOCALS", "LAZE AROUND", "NON-STOP VOYAGE", "HIGH-TOP", "WORN-OUT", 
+                "MIDDLE EASTERN", "FLOCK OF SHEEP"
+            ],
+            round5: [
+                "A POLITE GIRL FINDS ADVENTURE.",
+                "ENGINEER IS A COMMON DREAM.",
+                "HE ATTENDED HIS FIRST OLYMPICS.",
+                "EXPERTS SAY SPORTS BENEFIT TEENAGERS.",
+                "APPARENTLY POLICE HAVE GOOD INFORMATION.",
+                "BE POLITE WHEN ORDERING FOOD.",
+                "HE IS A REDHEAD WITH WRINKLES.",
+                "HE HAS HAZEL EYES AND SPIKY HAIR.",
+                "HE THOUGHT IT WAS HILARIOUS.",
+                "I HAVE EATEN ODD THINGS.",
+                "I KEPT THE SAME HAIRCUT.",
+                "I NEVER EXPECTED THE OPPORTUNITY.",
+                "I PREFER A COLD BEVERAGE.",
+                "I USUALLY AVOID JUNK FOOD.",
+                "IT GETS WORSE BEFORE TESTS.",
+                "PARKOUR IS A GROWING SPORT.",
+                "SHE ENJOYS PHYSICAL ACTIVITIES.",
+                "SHE LOVES FAMOUS CELEBRITIES.",
+                "SPORTS IMPROVE MUSCLE STRENGTH.",
+                "THE BAND AND FOOD WERE PERFECT.",
+                "THE FOOD WAS TRULY DISGUSTING.",
+                "THEY ESTABLISHED EVENT SEQUENCES.",
+                "THINK CAREFULLY ABOUT YOUR ACTIONS.",
+                "WE CAN STILL BE FRIENDS.",
+                "WE STARTED WITH BUNGEE JUMPING.",
+                "WE WERE ABSOLUTELY TERRIFIED.",
+                "THE ICONIC BLACK LEATHER JACKET.",
+                "SHE LOVES THE TIE-DYED TOPS.",
+                "I LOVE THE HIPPIE LOOK.",
+                "E-PAPER IS A DISPLAY TECHNOLOGY.",
+                "I'M ALLOWED TO PLAY VIDEO GAMES."
+            ]
+        };
+
+        const PHASE_NAMES = {
+            round1: "Round 1 - Easy Words",
+            round2: "Round 2 - Medium Words",
+            round3: "Round 3 - Hard Words",
+            round4: "Extra Round - Compounds & Expressions",
+            round5: "Sentences (Desempate)",
+            all: "Todas as Fases Misturadas"
+        };
+
+        let currentClass = "ASA_NORTE_MATUTINO";
+        let usedWords = { round1: new Set(), round2: new Set(), round3: new Set(), round4: new Set(), round5: new Set() };
+        let playersList = [];
+        let adaptiveRounds = [];
+        let drawHistoryList = [];
+        let currentWordDrawn = "";
+        let isWordRevealed = false;
+        let isHistoryOpen = true;
+
+        // --- SISTEMA DE PERSISTÊNCIA (STORAGE) ---
+        function getStorageKey(cls) {
+            return `spelling_adaptive_7th_semifinal_unid_${cls}`;
+        }
+
+        function saveCurrentTournament() {
+            const dataToSave = {
+                currentClass,
+                playersList,
+                adaptiveRounds,
+                drawHistoryList,
+                usedWords: {
+                    round1: Array.from(usedWords.round1),
+                    round2: Array.from(usedWords.round2),
+                    round3: Array.from(usedWords.round3),
+                    round4: Array.from(usedWords.round4),
+                    round5: Array.from(usedWords.round5)
+                },
+                savedAt: new Date().toLocaleString('pt-BR')
+            };
+
+            try {
+                localStorage.setItem(getStorageKey(currentClass), JSON.stringify(dataToSave));
+                showSaveFeedback(`Salvo com sucesso às ${dataToSave.savedAt.split(' ')[1]}`);
+            } catch (e) {
+                console.warn("Falha ao salvar no storage:", e);
+            }
+        }
+
+        function loadTournamentForClass(cls) {
+            const saved = localStorage.getItem(getStorageKey(cls));
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    playersList = parsed.playersList || [...CLASS_STUDENTS[cls]];
+                    adaptiveRounds = parsed.adaptiveRounds || [];
+                    drawHistoryList = parsed.drawHistoryList || [];
+                    
+                    usedWords = {
+                        round1: new Set(parsed.usedWords?.round1 || []),
+                        round2: new Set(parsed.usedWords?.round2 || []),
+                        round3: new Set(parsed.usedWords?.round3 || []),
+                        round4: new Set(parsed.usedWords?.round4 || []),
+                        round5: new Set(parsed.usedWords?.round5 || [])
+                    };
+
+                    showSaveFeedback(`Carregado: ${parsed.savedAt || 'Salvo'}`);
+                    renderPlayersList();
+                    renderBracket();
+                    renderHistory();
+                    updateCounts();
+                    updateRemainingCount();
+                    return true;
+                } catch (e) {
+                    console.error("Falha ao carregar:", e);
+                }
+            }
+            return false;
+        }
+
+        function showSaveFeedback(text) {
+            const el = document.getElementById('save-indicator');
+            el.innerText = `• ${text}`;
+            el.classList.add('text-emerald-400');
+            setTimeout(() => {
+                el.classList.remove('text-emerald-400');
+            }, 3000);
+        }
+
+        function onClassChange() {
+            const select = document.getElementById('class-select');
+            currentClass = select.value;
+            const classLabel = select.options[select.selectedIndex].text.split(' (')[0];
+            document.getElementById('bracket-class-label').innerText = classLabel;
+            document.getElementById('players-class-title').innerText = classLabel;
+            
+            const loaded = loadTournamentForClass(currentClass);
+            if (!loaded) {
+                playersList = [...(CLASS_STUDENTS[currentClass] || [])];
+                drawHistoryList = [];
+                Object.keys(usedWords).forEach(k => usedWords[k].clear());
+                initFirstRound();
+            }
+        }
+
+        function restoreCurrentClassDefault() {
+            if (!confirm(`Deseja restaurar a lista original da turma ${currentClass}? O chaveamento será reiniciado.`)) return;
+            playersList = [...(CLASS_STUDENTS[currentClass] || [])];
+            initFirstRound();
+            saveCurrentTournament();
+        }
+
+        // --- CRIAÇÃO DE CONFRONTOS ADAPTATIVOS ---
+        function shuffle(array) {
+            let arr = [...array], currentIndex = arr.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [arr[currentIndex], arr[randomIndex]] = [arr[randomIndex], arr[currentIndex]];
+            }
+            return arr;
+        }
+
+        function createMatchesFromList(playerArray) {
+            const shuffled = shuffle(playerArray);
+            const matches = [];
+            let matchCount = 1;
+
+            for (let i = 0; i < shuffled.length; i += 2) {
+                if (i + 1 < shuffled.length) {
+                    matches.push({
+                        id: `m_${Date.now()}_${i}`,
+                        p1: { name: shuffled[i], status: 'pending' },
+                        p2: { name: shuffled[i+1], status: 'pending' },
+                        isBye: false
+                    });
+                } else {
+                    matches.push({
+                        id: `m_${Date.now()}_${i}`,
+                        p1: { name: shuffled[i], status: 'passed' },
+                        p2: null,
+                        isBye: true
+                    });
+                }
+                matchCount++;
+            }
+            return matches;
+        }
+
+        function initFirstRound() {
+            if (playersList.length < 1) return;
+            adaptiveRounds = [{
+                roundNum: 1,
+                title: "1ª Fase (Todos os Alunos)",
+                matches: createMatchesFromList(playersList)
+            }];
+            renderPlayersList();
+            renderBracket();
+            updateCounts();
+            saveCurrentTournament();
+        }
+
+        function reshuffleInitialRound() {
+            if (confirm("Deseja sortear novamente os confrontos da 1ª Fase? Todo o histórico de fases será reiniciado.")) {
+                initFirstRound();
+            }
+        }
+
+        function togglePlayerStatus(roundIdx, matchIdx, playerNum) {
+            const round = adaptiveRounds[roundIdx];
+            if (!round) return;
+            const match = round.matches[matchIdx];
+            if (!match) return;
+
+            if (roundIdx < adaptiveRounds.length - 1) {
+                if (!confirm("Esta fase já gerou fases posteriores. Alterar o status aqui NÃO atualizará automaticamente as próximas fases já geradas. Deseja alterar mesmo assim?")) {
+                    return;
+                }
+            }
+
+            const targetPlayer = playerNum === 1 ? match.p1 : match.p2;
+            if (!targetPlayer || match.isBye) return;
+
+            if (targetPlayer.status === 'pending') targetPlayer.status = 'passed';
+            else if (targetPlayer.status === 'passed') targetPlayer.status = 'failed';
+            else targetPlayer.status = 'pending';
+
+            renderBracket();
+            updateCounts();
+            saveCurrentTournament();
+        }
+
+        function getQualifiedFromRound(roundIdx) {
+            const round = adaptiveRounds[roundIdx];
+            if (!round) return [];
+            const qualified = [];
+            round.matches.forEach(m => {
+                if (m.p1 && m.p1.status === 'passed') qualified.push(m.p1.name);
+                if (m.p2 && m.p2.status === 'passed') qualified.push(m.p2.name);
+            });
+            return qualified;
+        }
+
+        function advanceToNextRound() {
+            const currentRoundIdx = adaptiveRounds.length - 1;
+            const qualified = getQualifiedFromRound(currentRoundIdx);
+
+            if (qualified.length === 0) {
+                alert("Nenhum aluno foi marcado como aprovado (verde) na última fase! Marque os que acertaram antes de avançar.");
+                return;
+            }
+
+            if (qualified.length === 1) {
+                alert(`Temos um(a) grande Campeão(ã) da Turma: ${qualified[0]}! O torneio terminou.`);
+                return;
+            }
+
+            const nextRoundNum = adaptiveRounds.length + 1;
+            let title = `${nextRoundNum}ª Fase`;
+            if (qualified.length === 2) title = "Grande Final (1x1)";
+            else if (qualified.length <= 4) title = "Semifinais";
+            else if (qualified.length <= 8) title = "Quartas de Final";
+
+            adaptiveRounds.push({
+                roundNum: nextRoundNum,
+                title: `${title} (${qualified.length} Classificados)`,
+                matches: createMatchesFromList(qualified)
+            });
+
+            renderBracket();
+            updateCounts();
+            saveCurrentTournament();
+            
+            setTimeout(() => {
+                const container = document.querySelector('.bracket-container');
+                if (container) container.scrollTo({ left: container.scrollWidth, behavior: 'smooth' });
+            }, 100);
+        }
+
+        function removeLastRound() {
+            if (adaptiveRounds.length <= 1) return;
+            if (confirm("Deseja apagar a última fase gerada e voltar à fase anterior?")) {
+                adaptiveRounds.pop();
+                renderBracket();
+                updateCounts();
+                saveCurrentTournament();
+            }
+        }
+
+        function updateCounts() {
+            const currentRoundIdx = adaptiveRounds.length - 1;
+            const qualified = getQualifiedFromRound(currentRoundIdx);
+            document.getElementById('qualified-count').innerText = qualified.length;
+            document.getElementById('next-round-btn-count').innerText = qualified.length;
+
+            const btnRemove = document.getElementById('btn-remove-round');
+            if (adaptiveRounds.length > 1) {
+                btnRemove.classList.remove('hidden');
+            } else {
+                btnRemove.classList.add('hidden');
+            }
+        }
+
+        function getStatusBadge(player, isBye = false) {
+            if (isBye) {
+                return `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] font-bold">AVANÇA (BYE)</span>`;
+            }
+            if (!player) return '';
+
+            if (player.status === 'passed') {
+                return `<span class="px-2 py-1 rounded-md bg-emerald-950 border border-emerald-500 text-emerald-300 text-[11px] font-black flex items-center gap-1 shadow"><i class="fa-solid fa-check"></i> PASSOU</span>`;
+            } else if (player.status === 'failed') {
+                return `<span class="px-2 py-1 rounded-md bg-rose-950 border border-rose-500 text-rose-300 text-[11px] font-black flex items-center gap-1 shadow"><i class="fa-solid fa-xmark"></i> ERROU</span>`;
+            } else {
+                return `<span class="px-2 py-1 rounded-md bg-slate-800 border border-slate-700 text-slate-400 text-[11px] font-bold hover:bg-slate-700">Pendente (?)</span>`;
+            }
+        }
+
+        function renderBracket() {
+            let html = '';
+            adaptiveRounds.forEach((round, roundIdx) => {
+                const isLastRound = roundIdx === adaptiveRounds.length - 1;
+
+                html += `
+                <div class="w-80 space-y-4 shrink-0">
+                    <div class="bg-slate-900 border ${isLastRound ? 'border-amber-500/50 text-amber-300' : 'border-slate-800 text-slate-300'} font-bold text-xs uppercase py-2.5 px-3 rounded-xl flex items-center justify-between shadow-md">
+                        <span class="truncate">${round.title}</span>
+                        <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700 font-mono">${round.matches.length} J</span>
+                    </div>
+
+                    <div class="space-y-3.5">
+                        ${round.matches.map((m, mIdx) => {
+                            if (m.isBye) {
+                                return `
+                                <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3 text-xs space-y-2">
+                                    <div class="text-[10px] font-bold text-amber-400 uppercase tracking-wider flex justify-between">
+                                        <span>Jogo ${mIdx + 1}</span>
+                                        <span>Aluno sem oponente</span>
+                                    </div>
+                                    <div class="p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-500/40 flex items-center justify-between">
+                                        <span class="font-bold text-emerald-300 truncate">${m.p1.name}</span>
+                                        ${getStatusBadge(m.p1, true)}
+                                    </div>
+                                </div>`;
+                            }
+
+                            const p1Passed = m.p1.status === 'passed';
+                            const p1Failed = m.p1.status === 'failed';
+                            const p2Passed = m.p2.status === 'passed';
+                            const p2Failed = m.p2.status === 'failed';
+
+                            return `
+                            <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs space-y-2 shadow-sm">
+                                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex justify-between border-b border-slate-800 pb-1.5">
+                                    <span>Jogo ${mIdx + 1}</span>
+                                    <span class="text-slate-500 font-normal">Avalie cada lado</span>
+                                </div>
+                                
+                                <div onclick="togglePlayerStatus(${roundIdx}, ${mIdx}, 1)" 
+                                     class="p-2 rounded-lg cursor-pointer flex items-center justify-between border transition-all ${
+                                        p1Passed ? 'bg-emerald-950/40 border-emerald-500 text-emerald-200 font-bold' :
+                                        p1Failed ? 'bg-rose-950/30 border-rose-800 text-rose-300 line-through opacity-70' :
+                                        'bg-slate-950 border-slate-800 hover:border-slate-700 text-slate-200'
+                                     }">
+                                    <span class="truncate pr-2">${m.p1.name}</span>
+                                    ${getStatusBadge(m.p1)}
+                                </div>
+
+                                <div onclick="togglePlayerStatus(${roundIdx}, ${mIdx}, 2)" 
+                                     class="p-2 rounded-lg cursor-pointer flex items-center justify-between border transition-all ${
+                                        p2Passed ? 'bg-emerald-950/40 border-emerald-500 text-emerald-200 font-bold' :
+                                        p2Failed ? 'bg-rose-950/30 border-rose-800 text-rose-300 line-through opacity-70' :
+                                        'bg-slate-950 border-slate-800 hover:border-slate-700 text-slate-200'
+                                     }">
+                                    <span class="truncate pr-2">${m.p2.name}</span>
+                                    ${getStatusBadge(m.p2)}
+                                </div>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>`;
+            });
+
+            document.getElementById('bracket-columns-container').innerHTML = html;
+        }
+
+        // --- GESTÃO DE PARTICIPANTES ---
+        function handleAddPlayer(event) {
+            event.preventDefault();
+            const input = document.getElementById('new-player-name');
+            const name = input.value.trim().toUpperCase();
+            if (!name || playersList.includes(name)) return;
+            playersList.push(name); 
+            input.value = ''; 
+            initFirstRound();
+        }
+
+        function removePlayer(index) { 
+            playersList.splice(index, 1); 
+            initFirstRound(); 
+        }
+
+        function renderPlayersList() {
+            const container = document.getElementById('players-grid');
+            document.getElementById('players-badge-count').innerText = `Total: ${playersList.length} Alunos`;
+            document.getElementById('tab-players-count').innerText = playersList.length;
+            container.innerHTML = playersList.map((name, idx) => `
+                <div class="p-2.5 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-between group hover:border-slate-700">
+                    <div class="flex items-center space-x-2.5 truncate pr-2">
+                        <span class="text-[10px] text-indigo-400 font-bold w-5">${idx + 1}.</span>
+                        <span class="font-semibold text-slate-200 text-xs truncate" title="${name}">${name}</span>
+                    </div>
+                    <button onclick="removePlayer(${idx})" class="text-slate-600 hover:text-rose-400 p-1 transition-colors" title="Remover aluno"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                </div>
+            `).join('');
+        }
+
+        // --- SORTEADOR DE PALAVRAS ---
+        function getSelectedPhase() { return document.getElementById('phase-select').value || 'round1'; }
+        
+        function updateRemainingCount() {
+            const selectedPhase = getSelectedPhase();
+            let remaining = 0;
+            if (selectedPhase === 'all') {
+                Object.keys(SPELLING_WORDS).forEach(phase => {
+                    const total = SPELLING_WORDS[phase].length;
+                    const used = usedWords[phase] ? usedWords[phase].size : 0;
+                    remaining += Math.max(0, total - used);
+                });
+            } else {
+                const total = (SPELLING_WORDS[selectedPhase] || []).length;
+                const used = usedWords[selectedPhase] ? usedWords[selectedPhase].size : 0;
+                remaining = Math.max(0, total - used);
+            }
+            document.getElementById('remaining-count').innerText = remaining;
+        }
+
+        function onPhaseChange() {
+            updateRemainingCount();
+            hideHelperBox();
+            document.getElementById('judge-eval-box').classList.add('hidden');
+        }
+
+        function drawRandomWord() {
+            const selectedPhase = getSelectedPhase();
+            let candidatePhases = [];
+
+            if (selectedPhase === 'all') {
+                candidatePhases = Object.keys(SPELLING_WORDS).filter(phase => SPELLING_WORDS[phase].filter(w => !usedWords[phase].has(w)).length > 0);
+            } else {
+                if ((SPELLING_WORDS[selectedPhase] || []).filter(w => !usedWords[selectedPhase].has(w)).length > 0) candidatePhases.push(selectedPhase);
+            }
+
+            if (candidatePhases.length === 0) {
+                alert(`Todas as palavras desta fase já foram sorteadas! Resete a fase para reutilizá-las.`);
+                return;
+            }
+
+            const pickedPhase = candidatePhases[Math.floor(Math.random() * candidatePhases.length)];
+            const availableWords = SPELLING_WORDS[pickedPhase].filter(w => !usedWords[pickedPhase].has(w));
+            const word = availableWords[Math.floor(Math.random() * availableWords.length)];
+
+            usedWords[pickedPhase].add(word);
+            currentWordDrawn = word;
+            isWordRevealed = false;
+
+            document.getElementById('word-badge').innerText = `${PHASE_NAMES[pickedPhase] || pickedPhase}`;
+            document.getElementById('drawn-word-display').innerText = "🔒 • • • • •";
+            document.getElementById('reveal-btn-text').innerText = "Revelar Palavra";
+            document.getElementById('reveal-btn-icon').className = "fa-solid fa-eye";
+            document.getElementById('word-actions-bar').classList.replace('hidden', 'flex');
+            
+            const judgeBox = document.getElementById('judge-eval-box');
+            judgeBox.classList.remove('hidden');
+            document.getElementById('judge-spelling-input').value = '';
+            document.getElementById('judge-feedback').classList.add('hidden');
+
+            hideHelperBox();
+            updateRemainingCount();
+
+            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            drawHistoryList.unshift({ word, phase: PHASE_NAMES[pickedPhase], time: timeStr });
+            renderHistory();
+
+            speakCurrentWord();
+            saveCurrentTournament();
+        }
+
+        function toggleRevealWord() {
+            if (!currentWordDrawn) return;
+            isWordRevealed = !isWordRevealed;
+            const display = document.getElementById('drawn-word-display');
+            const btnText = document.getElementById('reveal-btn-text');
+            const btnIcon = document.getElementById('reveal-btn-icon');
+
+            if (isWordRevealed) {
+                display.innerText = currentWordDrawn;
+                btnText.innerText = "Ocultar Palavra";
+                btnIcon.className = "fa-solid fa-eye-slash";
+            } else {
+                display.innerText = "🔒 • • • • •";
+                btnText.innerText = "Revelar Palavra";
+                btnIcon.className = "fa-solid fa-eye";
+            }
+        }
+
+        // --- PRONÚNCIA EM INGLÊS CALIBRADA ---
+        let availableVoices = [];
+        function populateVoiceList() {
+            if ('speechSynthesis' in window) {
+                availableVoices = window.speechSynthesis.getVoices();
+            }
+        }
+        populateVoiceList();
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = populateVoiceList;
+        }
+
+        function getSpokenText(rawWord) {
+            if (rawWord.includes('/')) {
+                return rawWord.split('/')[0].replace(/\(.*?\)/g, '').trim();
+            }
+            return rawWord.replace(/\.$/, '');
+        }
+
+        function speakCurrentWord() {
+            if (!currentWordDrawn) return;
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                
+                const spokenText = getSpokenText(currentWordDrawn);
+                const utterance = new SpeechSynthesisUtterance(spokenText);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.85; 
+                utterance.pitch = 1.0;
+
+                if (availableVoices.length === 0) {
+                    availableVoices = window.speechSynthesis.getVoices();
+                }
+
+                if (availableVoices.length > 0) {
+                    const englishVoices = availableVoices.filter(v => v.lang.startsWith('en'));
+                    if (englishVoices.length > 0) {
+                        const preferredVoice = 
+                            englishVoices.find(v => v.name.includes('Google US English')) ||
+                            englishVoices.find(v => v.name.includes('Natural')) ||
+                            englishVoices.find(v => v.name.includes('Samantha')) ||
+                            englishVoices.find(v => v.name.includes('Jenny')) ||
+                            englishVoices.find(v => v.name.includes('Guy')) ||
+                            englishVoices.find(v => v.name.includes('Zira')) ||
+                            englishVoices.find(v => v.lang === 'en-US') ||
+                            englishVoices[0];
+                        if (preferredVoice) utterance.voice = preferredVoice;
+                    }
+                }
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // --- CONSULTAS E TRADUÇÃO ---
+        async function fetchTranslation(text) {
+            try {
+                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=pt&dt=t&q=${encodeURIComponent(text)}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data && data[0]) return data[0].map(item => item[0]).filter(Boolean).join('');
+            } catch (err) { console.warn('Translate API:', err); }
+            return null;
+        }
+
+        async function fetchDictionaryData(word) {
+            try {
+                const cleanWord = word.split('/')[0].replace(/\(.*?\)/g, '').replace(/[^a-zA-Z -]/g, '').trim().toLowerCase();
+                const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanWord)}`);
+                if (!res.ok) return null;
+                return await res.json();
+            } catch (err) { return null; }
+        }
+
+        async function showHelpInfo(type) {
+            if (!currentWordDrawn) return;
+            const helperBox = document.getElementById('helper-result-box');
+            const badge = document.getElementById('helper-type-badge');
+            const content = document.getElementById('helper-content');
+
+            helperBox.classList.remove('hidden');
+            content.innerHTML = `<div class="flex items-center gap-2 text-amber-400 py-2"><i class="fa-solid fa-circle-notch fa-spin"></i> Consultando dados...</div>`;
+
+            if (type === 'sentence') {
+                badge.innerHTML = `<i class="fa-solid fa-quote-left text-indigo-400"></i> Aplicação em Frase / Contexto`;
+                if (currentWordDrawn.endsWith('.') || currentWordDrawn.split(' ').length > 2) {
+                    content.innerHTML = `Aplicação: <span class="text-amber-300 font-semibold">"${currentWordDrawn}"</span>`;
+                } else {
+                    const dictData = await fetchDictionaryData(currentWordDrawn);
+                    let apiExample = null;
+                    if (dictData && dictData[0] && dictData[0].meanings) {
+                        for (let m of dictData[0].meanings) {
+                            for (let d of m.definitions) {
+                                if (d.example) { apiExample = d.example; break; }
+                            }
+                            if (apiExample) break;
+                        }
+                    }
+                    content.innerHTML = apiExample ? `"${apiExample}"` : `Contexto: <span class="italic text-slate-300">"Please spell the word <strong class="text-amber-400">${currentWordDrawn}</strong> for the judges."</span>`;
+                }
+            } else if (type === 'synonym') {
+                badge.innerHTML = `<i class="fa-solid fa-lightbulb text-purple-400"></i> Sinônimo / Definição`;
+                const dictData = await fetchDictionaryData(currentWordDrawn);
+                let synonymsList = [], definitionText = "";
+
+                if (dictData && dictData[0] && dictData[0].meanings) {
+                    for (let m of dictData[0].meanings) {
+                        if (m.synonyms?.length) synonymsList.push(...m.synonyms);
+                        for (let d of m.definitions) {
+                            if (d.synonyms?.length) synonymsList.push(...d.synonyms);
+                            if (!definitionText && d.definition) definitionText = d.definition;
+                        }
+                    }
+                }
+
+                synonymsList = [...new Set(synonymsList)].slice(0, 5);
+                if (synonymsList.length > 0) {
+                    let html = `<strong class="text-purple-300">Sinônimos:</strong> ${synonymsList.join(', ')}`;
+                    if (definitionText) html += `<br><span class="text-xs text-slate-400 mt-1 block"><strong class="text-slate-300">Definição:</strong> ${definitionText}</span>`;
+                    content.innerHTML = html;
+                } else if (definitionText) {
+                    content.innerHTML = `<strong class="text-purple-300">Definição:</strong> ${definitionText}`;
+                } else {
+                    content.innerHTML = `Dica: Palavra com <strong>${currentWordDrawn.replace(/[^a-zA-Z]/g, '').length}</strong> letras pertencente à categoria <strong>${PHASE_NAMES[getSelectedPhase()]}</strong>.`;
+                }
+            } else if (type === 'translation') {
+                badge.innerHTML = `<i class="fa-solid fa-language text-emerald-400"></i> Tradução (PT-BR)`;
+                const cleanForTranslation = getSpokenText(currentWordDrawn);
+                const translated = await fetchTranslation(cleanForTranslation);
+                content.innerHTML = translated ? `<strong class="text-emerald-300 text-base">${translated}</strong>` : `<span class="text-slate-400">Tradução não disponível no momento.</span>`;
+            }
+        }
+
+        function hideHelperBox() { document.getElementById('helper-result-box').classList.add('hidden'); }
+
+        function evaluateSpelling() {
+            if (!currentWordDrawn) return;
+            const inputEl = document.getElementById('judge-spelling-input');
+            const feedbackEl = document.getElementById('judge-feedback');
+            const typed = inputEl.value.trim();
+            if (!typed) return;
+
+            const normalize = str => str.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            const cleanTyped = normalize(typed);
+
+            const options = currentWordDrawn.split('/').map(opt => normalize(opt.replace(/\(.*?\)/g, '')));
+            const isMatch = options.some(opt => opt === cleanTyped);
+
+            feedbackEl.className = 'p-3 rounded-lg text-xs font-semibold border mt-2';
+            if (isMatch) {
+                feedbackEl.classList.add('bg-emerald-950/80', 'border-emerald-500', 'text-emerald-300');
+                feedbackEl.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> <strong class="uppercase">Soletração Correta!</strong> O aluno acertou "${currentWordDrawn}".`;
+            } else {
+                feedbackEl.classList.add('bg-rose-950/80', 'border-rose-500', 'text-rose-300');
+                feedbackEl.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1"></i> <strong>Soletração Incorreta.</strong><br>Digitado: ${typed.toUpperCase()}<br>Gabarito: ${currentWordDrawn.toUpperCase()}`;
+            }
+            feedbackEl.classList.remove('hidden');
+        }
+
+        function toggleHistoryList() {
+            isHistoryOpen = !isHistoryOpen;
+            const container = document.getElementById('draw-history');
+            const arrow = document.getElementById('history-arrow');
+            container.classList.toggle('hidden', !isHistoryOpen);
+            arrow.style.transform = isHistoryOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+
+        function resetPhaseWords() {
+            const selectedPhase = getSelectedPhase();
+            if (selectedPhase === 'all') { Object.keys(usedWords).forEach(k => usedWords[k].clear()); }
+            else { usedWords[selectedPhase]?.clear(); }
+            updateRemainingCount();
+            currentWordDrawn = ""; isWordRevealed = false;
+            document.getElementById('drawn-word-display').innerText = "???";
+            document.getElementById('word-actions-bar').classList.add('hidden');
+            document.getElementById('judge-eval-box').classList.add('hidden');
+            hideHelperBox();
+            saveCurrentTournament();
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('draw-history');
+            document.getElementById('history-badge-count').innerText = drawHistoryList.length;
+            if (drawHistoryList.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Nenhuma palavra sorteada nesta sessão.</p>`;
+                return;
+            }
+            container.innerHTML = drawHistoryList.map(item => `
+                <div class="p-2.5 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-between">
+                    <div class="truncate pr-2">
+                        <div class="text-xs font-bold text-slate-100 truncate">${item.word}</div>
+                        <div class="text-[10px] text-amber-400/80">${item.phase}</div>
+                    </div>
+                    <span class="text-[10px] text-slate-500 shrink-0 font-mono">${item.time}</span>
+                </div>
+            `).join('');
+        }
+
+        function clearHistory() { 
+            drawHistoryList = []; 
+            renderHistory(); 
+            saveCurrentTournament();
+        }
+
+        function switchTab(tab) {
+            ['spelling', 'bracket', 'players'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}-btn`).className = "pb-3 px-1 border-b-2 border-transparent text-slate-400 font-medium text-sm flex items-center gap-2";
+            });
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            const color = tab === 'spelling' ? 'amber-500' : 'indigo-500';
+            const textColor = tab === 'spelling' ? 'amber-400' : 'indigo-400';
+            document.getElementById(`tab-${tab}-btn`).className = `pb-3 px-1 border-b-2 border-${color} text-${textColor} font-bold text-sm flex items-center gap-2`;
+        }
+
+        window.onload = () => { 
+            onClassChange();
+        };
+    </script>
+</body>
+</html>
